@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #2C3E50;
+            --background-light: #ECF0F1;
+            --background-dark: #2C3E50;
+            --text-light: #FFFFFF;
+            --text-dark: #333333;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s, color 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            background: var(--primary-color);
+            padding: 15px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            background: var(--secondary-color);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #1A252F;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            background: #F7F9FA;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .dark-mode {
+            background: var(--background-dark);
+            color: var(--text-light);
+        }
+
+        .dark-mode .container {
+            background: #3A3B3C;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a onclick="navigate('home')">🏠 Home</a>
+        <a onclick="navigate('tasks')">📋 Tasks</a>
+        <a onclick="navigate('about')">ℹ About</a>
+    </nav>
+
+    <div class="container" id="home">
+        <h1>Welcome to Task Manager</h1>
+        <button onclick="navigate('tasks')">Start Now</button>
+    </div>
+
+    <div class="container" id="tasks">
+        <h1>Task List</h1>
+        <input type="text" id="taskInput" placeholder="Enter a task...">
+        <ul id="taskList"></ul>
+        <button id="addTaskBtn">Add Task</button>
+        <button id="darkModeToggle">Dark Mode</button>
+    </div>
+
+    <div class="container" id="about">
+        <h1>About This App</h1>
+        <p>Boost productivity with a simple, efficient task manager.</p>
+        <button onclick="navigate('home')">Back to Home</button>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            navigate('home');
+            renderTasks();
+            
+            if (localStorage.getItem("darkMode") === "enabled") {
+                $("body").addClass("dark-mode");
+            }
+
+            $("#addTaskBtn").click(function() {
+                const taskText = $("#taskInput").val().trim();
+                if (!taskText) return alert("Please enter a task.");
+
+                const tasks = loadTasks();
+                tasks.push({ id: Date.now(), title: taskText, completed: false });
+                saveTasks(tasks);
+                $("#taskInput").val("");
+                renderTasks();
+            });
+
+            $("#darkModeToggle").click(function() {
+                $("body").toggleClass("dark-mode");
+                localStorage.setItem("darkMode", $("body").hasClass("dark-mode") ? "enabled" : "disabled");
+            });
+        });
+
+        function navigate(page) {
+            $(".container").hide();
+            $("#" + page).fadeIn(300);
+        }
+
+        function loadTasks() {
+            return JSON.parse(localStorage.getItem("tasks")) || [];
+        }
+
+        function saveTasks(tasks) {
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function renderTasks() {
+            const taskList = $("#taskList");
+            taskList.html("");
+            loadTasks().forEach(task => {
+                const taskItem = $(`<li class="task-item ${task.completed ? 'completed' : ''}">
+                    ${task.title}
+                    <button onclick="completeTask(${task.id})">✅</button>
+                    <button onclick="deleteTask(${task.id})">❌</button>
+                </li>`);
+                taskList.prepend(taskItem);
+            });
+        }
+
+        function completeTask(id) {
+            let tasks = loadTasks().map(task => {
+                if (task.id === id) {
+                    task.completed = !task.completed;
+                    alert("Great job! You completed a task! 🎉");
+                }
+                return task;
+            });
+            saveTasks(tasks);
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            let tasks = loadTasks().filter(task => task.id !== id);
+            saveTasks(tasks);
+            renderTasks();
+        }
+    </script>
+</body>
+</html>
